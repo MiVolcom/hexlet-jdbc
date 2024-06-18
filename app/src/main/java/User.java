@@ -8,10 +8,13 @@ public class User {
         this.phone = phone;
     }
 
-    public User(Long id, String name, String phone) {
-        this.id = id;
-        this.name = name;
-        this.phone = phone;
+    @Override
+    public String toString() {
+        return "User{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", phone='" + phone + '\'' +
+                '}';
     }
 
     public String getName() {
@@ -30,3 +33,5 @@ public class User {
         this.id = id;
     }
 }
+
+

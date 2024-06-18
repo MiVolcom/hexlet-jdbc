@@ -1,6 +1,8 @@
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 public class UserDAO {
@@ -11,25 +13,21 @@ public class UserDAO {
     }
 
     public void save(User user) throws SQLException {
-        // Если пользователь новый, выполняем вставку
-        // Иначе обновляем
         if (user.getId() == null) {
-            var sql = "INSERT INTO users (username, phone) VALUES (?, ?)";
+            var sql = "INSERT INTO users (name, phone) VALUES (?, ?)";
             try (var preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
                 preparedStatement.setString(1, user.getName());
                 preparedStatement.setString(2, user.getPhone());
                 preparedStatement.executeUpdate();
                 var generatedKeys = preparedStatement.getGeneratedKeys();
-                // Если идентификатор сгенерирован, извлекаем его и добавляем в сохраненный объект
                 if (generatedKeys.next()) {
-                    // Обязательно устанавливаем id в сохраненный объект
                     user.setId(generatedKeys.getLong(1));
                 } else {
                     throw new SQLException("DB have not returned an id after saving an entity");
                 }
             }
         } else {
-            var sql = "UPDATE users SET username = ?, phone = ? WHERE id = ?";
+            var sql = "UPDATE users SET name = ?, phone = ? WHERE id = ?";
             try (var preparedStatement = connection.prepareStatement(sql)) {
                 preparedStatement.setString(1, user.getName());
                 preparedStatement.setString(2, user.getPhone());
@@ -38,8 +36,7 @@ public class UserDAO {
             }
         }
     }
-    // Возвращается Optional<User>
-    // Это упрощает обработку ситуаций, когда в базе ничего не найдено
+
     public Optional<User> find(Long id) throws SQLException {
         var sql = "SELECT * FROM users WHERE id = ?";
         try (var stmt = connection.prepareStatement(sql)) {
@@ -61,6 +58,23 @@ public class UserDAO {
             stmt.setLong(1, id);
             var affectedRows = stmt.executeUpdate();
             return affectedRows > 0;
+        }
+    }
+
+    public List<User> getEntities() throws SQLException {
+        List<User> result = new ArrayList<>();
+        var sql = "SELECT * FROM users";
+        try (var stmt = connection.prepareStatement(sql)) {
+            var resultSet = stmt.executeQuery();
+            while (resultSet.next()) {
+                Long id = resultSet.getLong("id");
+                String name = resultSet.getString("name");
+                String phone = resultSet.getString("phone");
+                User user = new User(name, phone);
+                user.setId(id);
+                result.add(user);
+            }
+            return result;
         }
     }
 }
